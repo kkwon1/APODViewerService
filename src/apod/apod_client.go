@@ -1,14 +1,22 @@
 package apod
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
-// set up vault to store API key
 func GetSinglePicture() {
-	httpResp, err := http.Get("https://api.nasa.gov/planetary/apod?api_key=@@@")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	httpResp, err := http.Get(fmt.Sprintf("https://api.nasa.gov/planetary/apod?api_key=%s", os.Getenv("NASA_API_KEY")))
 	if err != nil {
 		log.Fatal(err)
 	}
