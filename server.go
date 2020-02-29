@@ -55,6 +55,7 @@ func main() {
 	api.HandleFunc("", get).Methods(http.MethodGet)
 	api.HandleFunc("/users/", routes.CreateUser).Methods(http.MethodPost)
 	api.HandleFunc("/users/", routes.DeleteUser).Methods(http.MethodDelete)
+	// api.HandleFunc("/apod/batch/{num}", apod.GetBatchImages).Methods(http.MethodGet)
 	api.HandleFunc("", notFound)
 
 	srv := &http.Server{

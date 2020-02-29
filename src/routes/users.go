@@ -30,6 +30,8 @@ type User struct {
 }
 
 // CreateUser stores a new user in the DB given a username, email and password.
+// TODO: Make sure user name and email are unique before inserting into DB
+// TODO: Re-factor some code in this file to some helper class
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 

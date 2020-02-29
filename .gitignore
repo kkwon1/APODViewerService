@@ -16,3 +16,5 @@ vendor/
 
 # environment variables
 *.env
+
+notes.txt
