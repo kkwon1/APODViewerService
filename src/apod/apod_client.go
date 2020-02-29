@@ -1,11 +1,13 @@
 package apod
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -20,23 +22,14 @@ func init() {
 	}
 }
 
-func GetSinglePicture() {
-	httpResp, err := http.Get(fmt.Sprintf("https://api.nasa.gov/planetary/apod?api_key=%s", os.Getenv("NASA_API_KEY")))
-	if err != nil {
-		log.Fatal(err)
+func GetBatchImages(w http.ResponseWriter, r *http.Request) {
+	log.Print(r.URL.Query())
+	count, convErr := strconv.Atoi(r.URL.Query().Get("count"))
+
+	if convErr != nil {
+		log.Fatal(convErr)
 	}
 
-	defer httpResp.Body.Close()
-
-	body, err := ioutil.ReadAll(httpResp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println(string(body))
-}
-
-func GetBatchImages(count int) {
 	today := time.Now()
 	endDate := today.Format(layoutISO)
 	startDate := today.AddDate(0, 0, (count-1)*-1).Format(layoutISO)
@@ -55,5 +48,8 @@ func GetBatchImages(count int) {
 		log.Fatal(err)
 	}
 
-	log.Println(string(body))
+	log.Print("Successfully retrieved %s number of images", count)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(body)
 }
