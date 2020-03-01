@@ -1,8 +1,6 @@
 package main
 
 import (
-	"APODViewerService/src/apod"
-	"APODViewerService/src/routes"
 	"context"
 	"fmt"
 	"log"
@@ -11,6 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/kkwon1/APODViewerService/src/apod"
+	"github.com/kkwon1/APODViewerService/src/routes"
 
 	"github.com/gorilla/mux"
 )

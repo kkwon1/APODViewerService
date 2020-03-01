@@ -1,14 +1,15 @@
 package routes
 
 import (
-	"APODViewerService/src/db"
-	"APODViewerService/src/utils"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/kkwon1/APODViewerService/src/db"
+	"github.com/kkwon1/APODViewerService/src/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
