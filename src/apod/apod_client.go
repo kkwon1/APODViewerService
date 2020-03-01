@@ -48,7 +48,7 @@ func GetBatchImages(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	log.Print("Successfully retrieved %s number of images", count)
+	log.Printf("Successfully retrieved %d number of images", count)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(body)
