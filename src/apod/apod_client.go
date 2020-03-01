@@ -22,6 +22,7 @@ func init() {
 	}
 }
 
+// GetBatchImages will retrieve multiple images from NASA APOD API
 func GetBatchImages(w http.ResponseWriter, r *http.Request) {
 	log.Print(r.URL.Query())
 	count, convErr := strconv.Atoi(r.URL.Query().Get("count"))
