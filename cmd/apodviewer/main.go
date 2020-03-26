@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,50 +15,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func get(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "get called"}`))
-}
-
-func post(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(`{"message": "post called"}`))
-}
-
-func put(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	w.Write([]byte(`{"message": "put called"}`))
-}
-
-func delete(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "delete called"}`))
-}
-
-func notFound(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte(`{"message": "not found"}`))
-}
-
-func helloServer(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
-}
-
 func main() {
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("", get).Methods(http.MethodGet)
 	api.HandleFunc("/users/", users.CreateUser).Methods(http.MethodPost)
 	api.HandleFunc("/users/", users.DeleteUser).Methods(http.MethodDelete)
 	api.HandleFunc("/users/login", users.Login).Methods(http.MethodPost)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet)
-	api.HandleFunc("", notFound)
 
 	srv := &http.Server{
 		Addr:    ":8081",
