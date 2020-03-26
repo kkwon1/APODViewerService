@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kkwon1/APODViewerService/src/apod"
-	"github.com/kkwon1/APODViewerService/src/routes"
+	"github.com/kkwon1/APODViewerService/api/apod"
+	"github.com/kkwon1/APODViewerService/api/users"
 
 	"github.com/gorilla/mux"
 )
@@ -55,9 +55,9 @@ func main() {
 	api := r.PathPrefix("/api/v1").Subrouter()
 
 	api.HandleFunc("", get).Methods(http.MethodGet)
-	api.HandleFunc("/users/", routes.CreateUser).Methods(http.MethodPost)
-	api.HandleFunc("/users/", routes.DeleteUser).Methods(http.MethodDelete)
-	api.HandleFunc("/users/login", routes.Login).Methods(http.MethodPost)
+	api.HandleFunc("/users/", users.CreateUser).Methods(http.MethodPost)
+	api.HandleFunc("/users/", users.DeleteUser).Methods(http.MethodDelete)
+	api.HandleFunc("/users/login", users.Login).Methods(http.MethodPost)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet)
 	api.HandleFunc("", notFound)
 

@@ -1,4 +1,4 @@
-package routes
+package users
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kkwon1/APODViewerService/src/db"
+	"github.com/kkwon1/APODViewerService/db"
 	uuid "github.com/satori/go.uuid"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -151,7 +151,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	expiryTime := time.Now().Add(30 * time.Minute)
 
 	// Store session to db along with user
-	// TODO: First check that user exists, then just update session ID.
+	// TODO: First check that user already has a session token, then just update session ID.
 	// If not, add new record entirely
 	_, insertError := sessionsCollection.InsertOne(ctx, bson.D{
 		{Key: "username", Value: u.Username},
