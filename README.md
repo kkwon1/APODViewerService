@@ -10,8 +10,12 @@ The back-end service is responsible for serving the front-end app with APOD imag
 This project is using go modules. After pulling the repo, simply run `go get -v -d ./...`
 
 ## Usage
-Type `go run server.go` in the root directory to compile and run the binary file. This will start the service and allow you to interact with the endpoints on port `8081` (or whichever you specify it as).
-Make sure MongoDB is installed locally.
+From the root directory, type `go build cmd/apodviewer/main.go` to build a binary file. Or if you'd like to directly run
+the service, type `go run cmd/apodviewer/main.go`. Ensure you have a `.env` file with the appropriate environment variables
+before you try to run the service. Make sure MongoDB is installed locally.
 
 ## Tests
 Type `go test -v ./...` to run all tests. To run a single test file, specify the test file path `go test -v ./test/dir/filename`
+
+## Linting
+Type `golangci-lint run` to run a linter. Check out the github page [here](https://github.com/golangci/golangci-lint)

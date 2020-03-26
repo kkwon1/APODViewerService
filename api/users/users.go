@@ -1,4 +1,4 @@
-package routes
+package users
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kkwon1/APODViewerService/src/db"
-	"github.com/kkwon1/APODViewerService/src/utils"
+	"github.com/kkwon1/APODViewerService/db"
+	uuid "github.com/satori/go.uuid"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,10 +17,12 @@ import (
 )
 
 var usersCollection *mongo.Collection
+var sessionsCollection *mongo.Collection
 
 func init() {
 	var client = db.GetClient()
 	usersCollection = client.Database("apodDB").Collection("users")
+	sessionsCollection = client.Database("apodDB").Collection("sessions")
 }
 
 // User type containing Username, Email and Password
@@ -78,9 +80,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
 	}
 
-	var retrievedUser User
-
-	findError := usersCollection.FindOne(ctx, bson.M{"username": userToDelete.Username}).Decode(&retrievedUser)
+	retrievedUser, findError := checkUserExists(ctx, userToDelete.Username)
 
 	if findError != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -95,26 +95,26 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	passwordIsCorrect := comparePassword(retrievedUser.Password, userToDelete.Password)
 
-	if passwordIsCorrect {
-		res, deleteError := usersCollection.DeleteOne(ctx, bson.M{"username": userToDelete.Username})
-
-		if deleteError != nil {
-			log.Fatal(deleteError)
-		}
-
-		if res.DeletedCount == 0 {
-			fmt.Println("DeleteOne() document not found: ", res)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Service Error"))
-		} else {
-			fmt.Println("DeleteOne result:", res)
-			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(fmt.Sprintf("Successfully deleted user: %s", userToDelete.Username)))
-		}
-	} else {
+	if !passwordIsCorrect {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Username or Password is invalid"))
 		return
+	}
+
+	res, deleteError := usersCollection.DeleteOne(ctx, bson.M{"username": userToDelete.Username})
+
+	if deleteError != nil {
+		log.Fatal(deleteError)
+	}
+
+	if res.DeletedCount == 0 {
+		fmt.Println("DeleteOne() document not found: ", res)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Service Error"))
+	} else {
+		fmt.Println("DeleteOne result:", res)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(fmt.Sprintf("Successfully deleted user: %s", userToDelete.Username)))
 	}
 }
 
@@ -124,45 +124,63 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	var u User
 	decodeError := json.NewDecoder(r.Body).Decode(&u)
+
 	if decodeError != nil {
 		log.Fatal(decodeError)
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
 	}
 
-	var retrievedUser User
-
-	findError := usersCollection.FindOne(ctx, bson.M{"username": u.Username}).Decode(&retrievedUser)
+	retrievedUser, findError := checkUserExists(ctx, u.Username)
 
 	if findError != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("User does not exist"))
 		return
 	}
 
 	loginIsValid := comparePassword(retrievedUser.Password, u.Password)
 
-	if loginIsValid {
-		tokenString := utils.GetJwt()
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(tokenString))
-	} else {
+	if !loginIsValid {
 		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Username or Password is invalid"))
 		return
 	}
+
+	// Create new random session token
+	sessionToken := uuid.NewV4().String()
+	expiryTime := time.Now().Add(30 * time.Minute)
+
+	// Store session to db along with user
+	// TODO: First check that user already has a session token, then just update session ID.
+	// If not, add new record entirely
+	_, insertError := sessionsCollection.InsertOne(ctx, bson.D{
+		{Key: "username", Value: u.Username},
+		{Key: "sessionToken", Value: sessionToken},
+		{Key: "expiryTime", Value: expiryTime},
+	})
+
+	if insertError != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Service Error"))
+		log.Fatal(insertError)
+		return
+	}
+
+	// Set client cookie with session token
+	http.SetCookie(w, &http.Cookie{
+		Name:    "sessionToken",
+		Value:   sessionToken,
+		Expires: expiryTime,
+	})
 }
 
-// TestToken is A test endpoint function to check that the given jwt token is valid.
-func TestToken(w http.ResponseWriter, r *http.Request) {
-	tokenString := r.Header.Get("Authorization")
-	valid := utils.ValidateJwt(tokenString)
-	if valid {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("The token is valid"))
-	} else {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("The token is invalid"))
-		return
-	}
+// Function to simply check whether user already exists in DB
+func checkUserExists(ctx context.Context, username string) (User, error) {
+	var retrievedUser User
+
+	findError := usersCollection.FindOne(ctx, bson.M{"username": username}).Decode(&retrievedUser)
+
+	return retrievedUser, findError
 }
 
 // Helper function to compare the password with hash to check that input password is correct
