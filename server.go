@@ -57,6 +57,7 @@ func main() {
 	api.HandleFunc("", get).Methods(http.MethodGet)
 	api.HandleFunc("/users/", routes.CreateUser).Methods(http.MethodPost)
 	api.HandleFunc("/users/", routes.DeleteUser).Methods(http.MethodDelete)
+	api.HandleFunc("/users/login", routes.Login).Methods(http.MethodPost)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet)
 	api.HandleFunc("", notFound)
 

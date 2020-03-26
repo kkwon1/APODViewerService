@@ -15,3 +15,6 @@ Make sure MongoDB is installed locally.
 
 ## Tests
 Type `go test -v ./...` to run all tests. To run a single test file, specify the test file path `go test -v ./test/dir/filename`
+
+## Linting
+Type `golangci-lint run` to run a linter. Check out the github page [here](https://github.com/golangci/golangci-lint)
