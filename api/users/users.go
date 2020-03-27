@@ -41,8 +41,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var u User
 	decodeError := json.NewDecoder(r.Body).Decode(&u)
 	if decodeError != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Unexpected request payload"))
 		log.Fatal(decodeError)
-		http.Error(w, decodeError.Error(), http.StatusBadRequest)
+		return
 	}
 
 	bPassword := []byte(u.Password)
@@ -78,6 +80,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if decodeError != nil {
 		log.Fatal(decodeError)
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
+		return
 	}
 
 	retrievedUser, findError := checkUserExists(ctx, userToDelete.Username)
@@ -156,7 +159,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_, insertError := sessionsCollection.InsertOne(ctx, bson.D{
 		{Key: "username", Value: u.Username},
 		{Key: "sessionToken", Value: sessionToken},
-		{Key: "expiryTime", Value: expiryTime},
+		{Key: "expiryTime", Value: expiryTime.Unix()},
 	})
 
 	if insertError != nil {
