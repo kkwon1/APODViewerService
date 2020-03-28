@@ -9,28 +9,15 @@ import (
 	"time"
 
 	"github.com/kkwon1/APODViewerService/db"
+	"github.com/kkwon1/APODViewerService/models"
 	uuid "github.com/satori/go.uuid"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var usersCollection *mongo.Collection
-var sessionsCollection *mongo.Collection
-
-func init() {
-	var client = db.GetClient()
-	usersCollection = client.Database("apodDB").Collection("users")
-	sessionsCollection = client.Database("apodDB").Collection("sessions")
-}
-
-// User type containing Username, Email and Password
-type User struct {
-	Username string
-	Email    string
-	Password string
-}
+var usersDAO = db.NewUserDAO()
+var sessionsDAO = db.NewSessionsDAO()
 
 // CreateUser stores a new user in the DB given a username, email and password.
 // TODO: Make sure user name and email are unique before inserting into DB
@@ -38,11 +25,13 @@ type User struct {
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	var u User
+	var u *models.User
 	decodeError := json.NewDecoder(r.Body).Decode(&u)
 	if decodeError != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Unexpected request payload"))
 		log.Fatal(decodeError)
-		http.Error(w, decodeError.Error(), http.StatusBadRequest)
+		return
 	}
 
 	bPassword := []byte(u.Password)
@@ -51,11 +40,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(hashError)
 	}
 
-	_, insertError := usersCollection.InsertOne(ctx, bson.D{
-		{Key: "username", Value: u.Username},
-		{Key: "email", Value: u.Email},
-		{Key: "password", Value: string(hash)},
-	})
+	u.Password = string(hash)
+	insertError := usersDAO.CreateUser(ctx, u)
 
 	if insertError != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -73,27 +59,28 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	var userToDelete User
-	decodeError := json.NewDecoder(r.Body).Decode(&userToDelete)
+	var u *models.User
+	decodeError := json.NewDecoder(r.Body).Decode(&u)
 	if decodeError != nil {
 		log.Fatal(decodeError)
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
+		return
 	}
 
-	retrievedUser, findError := checkUserExists(ctx, userToDelete.Username)
+	retrievedUser, findError := usersDAO.FindOne(ctx, bson.M{"username": u.Username})
 
 	if findError != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if userToDelete.Password == "" {
+	if u.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Please provide a password"))
 		return
 	}
 
-	passwordIsCorrect := comparePassword(retrievedUser.Password, userToDelete.Password)
+	passwordIsCorrect := comparePassword(retrievedUser.Password, u.Password)
 
 	if !passwordIsCorrect {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -101,7 +88,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, deleteError := usersCollection.DeleteOne(ctx, bson.M{"username": userToDelete.Username})
+	res, deleteError := usersDAO.DeleteByUsername(ctx, u.Username)
 
 	if deleteError != nil {
 		log.Fatal(deleteError)
@@ -114,7 +101,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Println("DeleteOne result:", res)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(fmt.Sprintf("Successfully deleted user: %s", userToDelete.Username)))
+		w.Write([]byte(fmt.Sprintf("Successfully deleted user: %s", u.Username)))
 	}
 }
 
@@ -122,7 +109,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	var u User
+	var u *models.User
 	decodeError := json.NewDecoder(r.Body).Decode(&u)
 
 	if decodeError != nil {
@@ -130,7 +117,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
 	}
 
-	retrievedUser, findError := checkUserExists(ctx, u.Username)
+	retrievedUser, findError := usersDAO.FindOne(ctx, bson.M{"username": u.Username})
 
 	if findError != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -150,20 +137,34 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	sessionToken := uuid.NewV4().String()
 	expiryTime := time.Now().Add(30 * time.Minute)
 
+	session := &models.Session{
+		Username:     u.Username,
+		SessionToken: sessionToken,
+		ExpiryTime:   expiryTime.Unix(),
+	}
+
 	// Store session to db along with user
 	// TODO: First check that user already has a session token, then just update session ID.
 	// If not, add new record entirely
-	_, insertError := sessionsCollection.InsertOne(ctx, bson.D{
-		{Key: "username", Value: u.Username},
-		{Key: "sessionToken", Value: sessionToken},
-		{Key: "expiryTime", Value: expiryTime},
-	})
+	userSessionExists := userSessionExists(ctx, u.Username)
+	if userSessionExists {
+		updateError := sessionsDAO.UpdateSessionToken(ctx, u.Username, sessionToken)
 
-	if insertError != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Service Error"))
-		log.Fatal(insertError)
-		return
+		if updateError != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Service Error"))
+			log.Fatal(updateError)
+			return
+		}
+	} else {
+		insertError := sessionsDAO.CreateSessionRecord(ctx, session)
+
+		if insertError != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Service Error"))
+			log.Fatal(insertError)
+			return
+		}
 	}
 
 	// Set client cookie with session token
@@ -174,13 +175,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Function to simply check whether user already exists in DB
-func checkUserExists(ctx context.Context, username string) (User, error) {
-	var retrievedUser User
+func userSessionExists(ctx context.Context, username string) bool {
+	_, err := sessionsDAO.FindOne(ctx, bson.M{"username": username})
+	if err != nil {
+		log.Print(err)
+		return false
+	}
 
-	findError := usersCollection.FindOne(ctx, bson.M{"username": username}).Decode(&retrievedUser)
-
-	return retrievedUser, findError
+	return true
 }
 
 // Helper function to compare the password with hash to check that input password is correct

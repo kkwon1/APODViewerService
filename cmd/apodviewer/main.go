@@ -21,7 +21,8 @@ func main() {
 
 	api.HandleFunc("/users/", users.CreateUser).Methods(http.MethodPost)
 	api.HandleFunc("/users/", users.DeleteUser).Methods(http.MethodDelete)
-	api.HandleFunc("/users/login", users.Login).Methods(http.MethodPost)
+	api.HandleFunc("/users/login/", users.Login).Methods(http.MethodPost)
+	api.HandleFunc("/users/save/", users.SaveContent).Methods(http.MethodPost)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet)
 
 	srv := &http.Server{

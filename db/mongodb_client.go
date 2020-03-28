@@ -9,7 +9,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Client *mongo.Client
+var databaseAPOD *mongo.Database
+
+// Collection objects that are used within the package
+var usersCollection *mongo.Collection
+var sessionsCollection *mongo.Collection
+var savesCollection *mongo.Collection
+
+const dbName = "apodDB"
 
 func init() {
 	// Set client options
@@ -30,9 +37,10 @@ func init() {
 	}
 
 	fmt.Println("Successfully connected to MongoDB!")
-	Client = client
-}
 
-func GetClient() *mongo.Client {
-	return Client
+	databaseAPOD = client.Database(dbName)
+
+	usersCollection = databaseAPOD.Collection("users")
+	sessionsCollection = databaseAPOD.Collection("sessions")
+	savesCollection = databaseAPOD.Collection("saves")
 }
