@@ -8,37 +8,17 @@ import (
 	"time"
 
 	"github.com/kkwon1/APODViewerService/db"
+	"github.com/kkwon1/APODViewerService/models"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// UserAction type
-type UserAction struct {
-	Username string
-	Action   string
-	ApodURL  string
-	ApodName string
-	ApodDate string
-}
-
-type Session struct {
-	Username     string
-	SessionToken string
-	ExpiryTime   int64
-}
-
-var savesCollection *mongo.Collection
-
-func init() {
-	var client = db.GetClient()
-	savesCollection = client.Database("apodDB").Collection("saves")
-}
+var actionsDAO = db.NewUserActionDAO()
 
 // SaveContent is an endpoint that allows users to save/favourite an APOD of their choosing.
 func SaveContent(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	var userAction UserAction
+	var userAction *models.UserAction
 	decodeError := json.NewDecoder(r.Body).Decode(&userAction)
 	if decodeError != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -67,14 +47,7 @@ func SaveContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, insertError := savesCollection.InsertOne(ctx, bson.D{
-		{Key: "username", Value: userAction.Username},
-		{Key: "action", Value: userAction.Action},
-		{Key: "apodUrl", Value: userAction.ApodURL},
-		{Key: "apodName", Value: userAction.ApodName},
-		{Key: "apodDate", Value: userAction.ApodDate},
-		{Key: "createdDate", Value: time.Now().Unix()},
-	})
+	insertError := actionsDAO.SaveApod(ctx, userAction)
 
 	if insertError != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,8 +63,10 @@ func LikeContent()
 */
 
 func sessionIsValid(ctx context.Context, sessionToken string, username string) bool {
-	var session Session
-	sessionsCollection.FindOne(ctx, bson.M{"username": username}).Decode(&session)
+	session, err := sessionsDAO.FindOne(ctx, bson.M{"username": username})
+	if err != nil {
+		log.Print(err)
+	}
 
 	currentTime := time.Now().Unix()
 
