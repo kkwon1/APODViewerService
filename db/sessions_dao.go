@@ -12,7 +12,7 @@ import (
 type SessionsDAO interface {
 	FindOne(context.Context, interface{}) (*models.Session, error)
 	CreateSessionRecord(context.Context, *models.Session) error
-	UpdateSessionToken(context.Context, string, string) error
+	UpdateSessionToken(context.Context, *models.Session) error
 }
 
 type sessionsDao struct {
@@ -41,7 +41,17 @@ func (s *sessionsDao) CreateSessionRecord(ctx context.Context, session *models.S
 }
 
 // UpdateSessionToken updates the session token for a given user
-func (s *sessionsDao) UpdateSessionToken(ctx context.Context, username string, sessionToken string) error {
-	_, err := sessionsCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"sessionToken": sessionToken})
+func (s *sessionsDao) UpdateSessionToken(ctx context.Context, session *models.Session) error {
+	filter := bson.M{
+		"username": session.Username,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"sessionToken": session.SessionToken,
+			"expiryTime":   session.ExpiryTime,
+		},
+	}
+	_, err := sessionsCollection.UpdateOne(ctx, filter, update)
 	return err
 }

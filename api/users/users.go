@@ -148,7 +148,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// If not, add new record entirely
 	userSessionExists := userSessionExists(ctx, u.Username)
 	if userSessionExists {
-		updateError := sessionsDAO.UpdateSessionToken(ctx, u.Username, sessionToken)
+		updateError := sessionsDAO.UpdateSessionToken(ctx, session)
 
 		if updateError != nil {
 			w.WriteHeader(http.StatusInternalServerError)
