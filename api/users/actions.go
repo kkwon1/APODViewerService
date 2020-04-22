@@ -3,9 +3,10 @@ package users
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/kkwon1/APODViewerService/db"
 	"github.com/kkwon1/APODViewerService/models"
@@ -23,7 +24,7 @@ func SaveContent(w http.ResponseWriter, r *http.Request) {
 	if decodeError != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Unexpected payload"))
-		log.Fatal(decodeError)
+		log.Errorln(decodeError)
 		return
 	}
 

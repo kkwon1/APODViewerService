@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/kkwon1/APODViewerService/db"
 	"github.com/kkwon1/APODViewerService/models"
 	uuid "github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -30,14 +30,27 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if decodeError != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Unexpected request payload"))
-		log.Fatal(decodeError)
+		log.Errorln(decodeError)
+		return
+	}
+
+	retrievedUser, _ := usersDAO.FindOne(ctx, bson.M{"username": u.Username})
+
+	if retrievedUser != nil {
+		errorString := fmt.Sprintf("User %s already exists in the database", u.Username)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorString))
+		log.Errorln(errorString)
 		return
 	}
 
 	bPassword := []byte(u.Password)
 	hash, hashError := bcrypt.GenerateFromPassword(bPassword, bcrypt.MinCost)
 	if hashError != nil {
-		log.Fatal(hashError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Generating hash has failed"))
+		log.Errorln(hashError)
+		return
 	}
 
 	u.Password = string(hash)
@@ -46,11 +59,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if insertError != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Service Error"))
-		log.Fatal(insertError)
+		log.Errorln(insertError)
 		return
 	}
 
-	log.Print("Inserted a new user into users collection")
+	log.Println("Inserted a new user into users collection")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(fmt.Sprintf("Successfully created user: %s", u.Username)))
 }
@@ -62,7 +75,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var u *models.User
 	decodeError := json.NewDecoder(r.Body).Decode(&u)
 	if decodeError != nil {
-		log.Fatal(decodeError)
+		log.Errorln(decodeError)
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
 		return
 	}
@@ -71,6 +84,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if findError != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("User does not exist in database"))
 		return
 	}
 
@@ -91,7 +105,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	res, deleteError := usersDAO.DeleteByUsername(ctx, u.Username)
 
 	if deleteError != nil {
-		log.Fatal(deleteError)
+		log.Errorln(deleteError)
 	}
 
 	if res.DeletedCount == 0 {
@@ -113,7 +127,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	decodeError := json.NewDecoder(r.Body).Decode(&u)
 
 	if decodeError != nil {
-		log.Fatal(decodeError)
+		log.Errorln(decodeError)
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
 	}
 
@@ -148,12 +162,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// If not, add new record entirely
 	userSessionExists := userSessionExists(ctx, u.Username)
 	if userSessionExists {
-		updateError := sessionsDAO.UpdateSessionToken(ctx, u.Username, sessionToken)
+		updateError := sessionsDAO.UpdateSessionToken(ctx, session)
 
 		if updateError != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Service Error"))
-			log.Fatal(updateError)
+			log.Errorln(updateError)
 			return
 		}
 	} else {
@@ -162,7 +176,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		if insertError != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Service Error"))
-			log.Fatal(insertError)
+			log.Errorln(insertError)
 			return
 		}
 	}
@@ -178,7 +192,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 func userSessionExists(ctx context.Context, username string) bool {
 	_, err := sessionsDAO.FindOne(ctx, bson.M{"username": username})
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		return false
 	}
 
