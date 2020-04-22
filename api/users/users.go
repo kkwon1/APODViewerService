@@ -34,10 +34,23 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	retrievedUser, _ := usersDAO.FindOne(ctx, bson.M{"username": u.Username})
+
+	if retrievedUser != nil {
+		errorString := fmt.Sprintf("User %s already exists in the database", u.Username)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorString))
+		log.Errorln(errorString)
+		return
+	}
+
 	bPassword := []byte(u.Password)
 	hash, hashError := bcrypt.GenerateFromPassword(bPassword, bcrypt.MinCost)
 	if hashError != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Generating hash has failed"))
 		log.Errorln(hashError)
+		return
 	}
 
 	u.Password = string(hash)
@@ -71,6 +84,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if findError != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("User does not exist in database"))
 		return
 	}
 
