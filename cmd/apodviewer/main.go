@@ -15,15 +15,34 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// CORS Middleware
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Set headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers:", "Origin, X-Requested-With, Content-Type, Accept")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, PUT, OPTIONS")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Next
+		next.ServeHTTP(w, r)
+		return
+	})
+}
+
 func main() {
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("/users/", users.CreateUser).Methods(http.MethodPost)
-	api.HandleFunc("/users/", users.DeleteUser).Methods(http.MethodDelete)
-	api.HandleFunc("/users/login/", users.Login).Methods(http.MethodPost)
-	api.HandleFunc("/users/save/", users.SaveContent).Methods(http.MethodPost)
-	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet)
+	api.HandleFunc("/users/save/", users.SaveContent).Methods(http.MethodPost, http.MethodOptions)
+	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet, http.MethodOptions)
+
+	r.Use(CORS)
 
 	srv := &http.Server{
 		Addr:    ":8081",

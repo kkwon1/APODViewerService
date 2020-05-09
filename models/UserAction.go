@@ -1,9 +1,10 @@
 package models
 
 type UserAction struct {
-	Username string
+	UserID   string
 	Action   string
 	ApodURL  string
 	ApodName string
 	ApodDate string
+	IDToken  string
 }
