@@ -36,10 +36,6 @@ func SaveContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Token verified!")
-
-	log.Println(userAction)
-
 	insertError := actionsDAO.SaveApod(ctx, userAction)
 
 	if insertError != nil {

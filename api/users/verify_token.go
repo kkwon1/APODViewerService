@@ -33,7 +33,7 @@ func VerifyToken(ctx context.Context, idToken string) (bool, error) {
 		return false, fmt.Errorf("error verifying ID token: %v\n", verify_err)
 	}
 
-	log.Printf("Verified ID token: %v\n", token)
+	log.Debugf("Verified ID token: %v\n", token)
 
 	return true, nil
 }
