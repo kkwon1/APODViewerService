@@ -14,6 +14,7 @@ import (
 
 func VerifyToken(ctx context.Context, idToken string) (bool, error) {
 	credentials_file := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
 	opt := option.WithCredentialsFile(credentials_file)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
