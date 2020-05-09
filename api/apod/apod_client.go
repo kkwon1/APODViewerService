@@ -24,10 +24,6 @@ func init() {
 
 // GetBatchImages will retrieve multiple images from NASA APOD API
 func GetBatchImages(w http.ResponseWriter, r *http.Request) {
-	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
 	count, convErr := strconv.Atoi(r.URL.Query().Get("count"))
 
 	if convErr != nil {
