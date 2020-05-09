@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,7 +21,8 @@ const dbName = "apodDB"
 
 func init() {
 	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	mongo_uri := fmt.Sprintf("mongodb://%s:27017", os.Getenv("MONGODB_NAME"))
+	clientOptions := options.Client().ApplyURI(mongo_uri)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)

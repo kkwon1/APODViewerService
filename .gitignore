@@ -21,7 +21,9 @@ vendor/
 notes.txt
 
 # Firebase Admin SDK secrets file
-apodviewer-2e111-firebase-adminsdk-hfldf-07a383a028.json
+secrets/*
 
-# Docker generated file
-data/*
+# Docker project generated files to ignore
+#  if you want to ignore files created by your editor/tools,
+#  please consider a global .gitignore https://help.github.com/articles/ignoring-files
+data/

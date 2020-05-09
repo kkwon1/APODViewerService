@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -37,6 +38,7 @@ func CORS(next http.Handler) http.Handler {
 
 func main() {
 	r := mux.NewRouter()
+	r.HandleFunc("/", HelloServer)
 	api := r.PathPrefix("/api/v1").Subrouter()
 
 	api.HandleFunc("/users/save/", users.SaveContent).Methods(http.MethodPost, http.MethodOptions)
@@ -73,4 +75,10 @@ func main() {
 		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
 	log.Print("Server Exited Properly")
+}
+
+// TODO: Remove
+// Temporary endpoint for debugging purposes
+func HelloServer(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello World!")
 }
