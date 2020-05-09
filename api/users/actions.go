@@ -16,11 +16,6 @@ var actionsDAO = db.NewUserActionDAO()
 
 // SaveContent is an endpoint that allows users to save/favourite an APOD of their choosing.
 func SaveContent(w http.ResponseWriter, r *http.Request) {
-	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	var userAction *models.UserAction
