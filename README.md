@@ -6,6 +6,10 @@ The front-end React app repo can be found [here](https://github.com/kkwon1/APODV
 
 The back-end service is responsible for serving the front-end app with APOD images, and eventually will allow users to search, like and save for images. It will also be communicating with the NASA API.
 
+## Firebase
+
+This service uses Firebase to authenticate users, which means to run this service properly you will need to set up your own firebase app [here](https://firebase.google.com/) and generate a private Admin SDK key (If you want to verify tokens from the front end).
+
 ## Docker
 
 This project can be run using Docker and Docker Compose. Type `docker-compose up` to start the mongodb and go service containers.
