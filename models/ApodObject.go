@@ -1,12 +1,11 @@
 package models
 
-type UserAction struct {
+// ApodObject model
+type ApodObject struct {
 	UserID      string
-	Action      string
 	ApodURL     string
 	ApodName    string
 	ApodDate    string
-	IDToken     string
 	MediaType   string
 	Description string
 }

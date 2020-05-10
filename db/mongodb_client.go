@@ -16,6 +16,7 @@ var databaseAPOD *mongo.Database
 var usersCollection *mongo.Collection
 var sessionsCollection *mongo.Collection
 var savesCollection *mongo.Collection
+var likesCollection *mongo.Collection
 
 const dbName = "apodDB"
 
@@ -45,4 +46,5 @@ func init() {
 	usersCollection = databaseAPOD.Collection("users")
 	sessionsCollection = databaseAPOD.Collection("sessions")
 	savesCollection = databaseAPOD.Collection("saves")
+	likesCollection = databaseAPOD.Collection("likes")
 }

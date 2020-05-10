@@ -41,8 +41,9 @@ func main() {
 	r.HandleFunc("/", HelloServer)
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("/users/save/", users.SaveContent).Methods(http.MethodPost, http.MethodOptions)
+	api.HandleFunc("/users/action/", users.UserAction).Methods(http.MethodPost, http.MethodOptions)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet, http.MethodOptions)
+	api.HandleFunc("/users/data/", users.RetrieveUserData).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Use(CORS)
 

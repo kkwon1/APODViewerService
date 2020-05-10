@@ -14,10 +14,13 @@ import (
 
 var actionsDAO = db.NewUserActionDAO()
 
+//TODO: Make a single endpoint for like/save and split off in code? Lots of repeated logic
+
 // SaveContent is an endpoint that allows users to save/favourite an APOD of their choosing.
-func SaveContent(w http.ResponseWriter, r *http.Request) {
+func UserAction(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
+	log.Debugln("Starting UserAction call")
 	var userAction *models.UserAction
 
 	decodeError := json.NewDecoder(r.Body).Decode(&userAction)
@@ -36,17 +39,28 @@ func SaveContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	insertError := actionsDAO.SaveApod(ctx, userAction)
-
-	if insertError != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Service Error"))
-		log.Fatal(insertError)
+	switch userAction.Action {
+	case "save":
+		insertError := actionsDAO.SaveApod(ctx, userAction)
+		if insertError != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Service Error"))
+			log.Fatal(insertError)
+			return
+		}
+	case "like":
+		insertError := actionsDAO.LikeApod(ctx, userAction)
+		if insertError != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Service Error"))
+			log.Fatal(insertError)
+			return
+		}
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid action in request body"))
 		return
 	}
-}
 
-// TODO: Implement this function
-/*
-func LikeContent()
-*/
+	log.Printf("Username: %s, Successfully completed user action: %s", userAction.UserID, userAction.Action)
+}
