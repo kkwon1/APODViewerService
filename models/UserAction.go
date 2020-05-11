@@ -6,7 +6,7 @@ type UserAction struct {
 	ApodURL     string
 	ApodName    string
 	ApodDate    string
-	IDToken     string
 	MediaType   string
 	Description string
+	ActionDate  string
 }

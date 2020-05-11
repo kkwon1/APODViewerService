@@ -8,4 +8,5 @@ type ApodObject struct {
 	ApodDate    string
 	MediaType   string
 	Description string
+	ActionDate  string
 }

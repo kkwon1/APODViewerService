@@ -13,8 +13,6 @@ import (
 var databaseAPOD *mongo.Database
 
 // Collection objects that are used within the package
-var usersCollection *mongo.Collection
-var sessionsCollection *mongo.Collection
 var savesCollection *mongo.Collection
 var likesCollection *mongo.Collection
 
@@ -43,8 +41,6 @@ func init() {
 
 	databaseAPOD = client.Database(dbName)
 
-	usersCollection = databaseAPOD.Collection("users")
-	sessionsCollection = databaseAPOD.Collection("sessions")
 	savesCollection = databaseAPOD.Collection("saves")
 	likesCollection = databaseAPOD.Collection("likes")
 }

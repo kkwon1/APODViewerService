@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,8 +19,8 @@ var actionsDAO = db.NewUserActionDAO()
 
 // SaveContent is an endpoint that allows users to save/favourite an APOD of their choosing.
 func UserAction(w http.ResponseWriter, r *http.Request) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	log.Debugln("Starting UserAction call")
 	var userAction *models.UserAction
 
@@ -31,7 +32,11 @@ func UserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	verified, verify_err := VerifyToken(ctx, userAction.IDToken)
+	authHeader := r.Header.Get("Authorization")
+	splitToken := strings.Split(authHeader, "Bearer ")
+	idToken := splitToken[1]
+
+	verified, verify_err := VerifyToken(ctx, idToken)
 	if verify_err != nil || !verified {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Verification Failed"))
