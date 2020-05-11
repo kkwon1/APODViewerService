@@ -30,9 +30,7 @@ func NewUserAction(tokenVerifier utils.TokenVerifier) UserAction {
 	}
 }
 
-//TODO: Make a single endpoint for like/save and split off in code? Lots of repeated logic
-
-// SaveContent is an endpoint that allows users to save/favourite an APOD of their choosing.
+// ApplyAction is an endpoint that allows users to like or save an APOD
 func (ua *userAction) ApplyAction(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
