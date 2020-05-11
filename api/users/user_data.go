@@ -9,12 +9,27 @@ import (
 
 	"github.com/kkwon1/APODViewerService/db"
 	"github.com/kkwon1/APODViewerService/models"
+	"github.com/kkwon1/APODViewerService/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 var userDataDAO = db.NewUserDataDAO()
 
-func RetrieveUserData(w http.ResponseWriter, r *http.Request) {
+type UserDataRetriever interface {
+	RetrieveUserData(w http.ResponseWriter, r *http.Request)
+}
+
+type userDataRetriever struct {
+	tokenVerifier utils.TokenVerifier
+}
+
+func NewUserDataRetriever(tokenVerifier utils.TokenVerifier) UserDataRetriever {
+	return &userDataRetriever{
+		tokenVerifier: tokenVerifier,
+	}
+}
+
+func (udr *userDataRetriever) RetrieveUserData(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -32,7 +47,7 @@ func RetrieveUserData(w http.ResponseWriter, r *http.Request) {
 	splitToken := strings.Split(authHeader, "Bearer ")
 	idToken := splitToken[1]
 
-	verified, verifyError := VerifyToken(ctx, idToken)
+	verified, verifyError := udr.tokenVerifier.VerifyToken(ctx, idToken)
 	if verifyError != nil || !verified {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Verification Failed"))

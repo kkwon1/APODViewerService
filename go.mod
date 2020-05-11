@@ -11,6 +11,7 @@ require (
 	github.com/golang/snappy v0.0.0-20190904063534-ff6b7dc882cf
 	github.com/golangci/golangci-lint v1.26.0 // indirect
 	github.com/google/go-cmp v0.4.0 // indirect
+	github.com/google/wire v0.4.0 // indirect
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/joho/godotenv v1.3.0

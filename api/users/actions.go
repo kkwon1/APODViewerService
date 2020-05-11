@@ -11,14 +11,29 @@ import (
 
 	"github.com/kkwon1/APODViewerService/db"
 	"github.com/kkwon1/APODViewerService/models"
+	"github.com/kkwon1/APODViewerService/utils"
 )
 
 var actionsDAO = db.NewUserActionDAO()
 
+type UserAction interface {
+	ApplyAction(w http.ResponseWriter, r *http.Request)
+}
+
+type userAction struct {
+	tokenVerifier utils.TokenVerifier
+}
+
+func NewUserAction(tokenVerifier utils.TokenVerifier) UserAction {
+	return &userAction{
+		tokenVerifier: tokenVerifier,
+	}
+}
+
 //TODO: Make a single endpoint for like/save and split off in code? Lots of repeated logic
 
 // SaveContent is an endpoint that allows users to save/favourite an APOD of their choosing.
-func UserAction(w http.ResponseWriter, r *http.Request) {
+func (ua *userAction) ApplyAction(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	log.Debugln("Starting UserAction call")
@@ -36,7 +51,7 @@ func UserAction(w http.ResponseWriter, r *http.Request) {
 	splitToken := strings.Split(authHeader, "Bearer ")
 	idToken := splitToken[1]
 
-	verified, verify_err := VerifyToken(ctx, idToken)
+	verified, verify_err := ua.tokenVerifier.VerifyToken(ctx, idToken)
 	if verify_err != nil || !verified {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Verification Failed"))
@@ -44,42 +59,30 @@ func UserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var err error
 	switch userAction.Action {
 	case "save":
-		insertError := actionsDAO.SaveApod(ctx, userAction)
-		if insertError != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Service Error"))
-			log.Fatal(insertError)
-			return
-		}
+		err = actionsDAO.SaveApod(ctx, userAction)
+		w.Write([]byte("Successfully saved APOD"))
 	case "unsave":
-		deleteError := actionsDAO.UnsaveApod(ctx, userAction)
-		if deleteError != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Service Error"))
-			log.Fatal(deleteError)
-			return
-		}
+		err = actionsDAO.UnsaveApod(ctx, userAction)
+		w.Write([]byte("Successfully unsaved APOD"))
 	case "like":
-		insertError := actionsDAO.LikeApod(ctx, userAction)
-		if insertError != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Service Error"))
-			log.Fatal(insertError)
-			return
-		}
+		err = actionsDAO.LikeApod(ctx, userAction)
+		w.Write([]byte("Successfully liked APOD"))
 	case "unlike":
-		deleteError := actionsDAO.UnlikeApod(ctx, userAction)
-		if deleteError != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Service Error"))
-			log.Fatal(deleteError)
-			return
-		}
+		err = actionsDAO.UnlikeApod(ctx, userAction)
+		w.Write([]byte("Successfully unliked APOD"))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid action in request body"))
+		return
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Service Error"))
+		log.Fatal(err)
 		return
 	}
 

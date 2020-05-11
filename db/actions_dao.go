@@ -31,14 +31,20 @@ func NewUserActionDAO() ActionsDAO {
 
 // SaveApod adds a new record of a save action in the database
 func (u *actionsDAO) SaveApod(ctx context.Context, userAction *models.UserAction) error {
-	_, err := savesCollection.InsertOne(ctx, userAction)
-	return err
+	if !saveApodExists(ctx, userAction) {
+		_, err := savesCollection.InsertOne(ctx, userAction)
+		return err
+	}
+	return nil
 }
 
 // LikeApod adds a new record of a like action in the database
 func (u *actionsDAO) LikeApod(ctx context.Context, userAction *models.UserAction) error {
-	_, err := likesCollection.InsertOne(ctx, userAction)
-	return err
+	if !likeApodExists(ctx, userAction) {
+		_, err := likesCollection.InsertOne(ctx, userAction)
+		return err
+	}
+	return nil
 }
 
 //TODO: In the future, support multiple saved image deletion
@@ -52,4 +58,22 @@ func (u *actionsDAO) UnsaveApod(ctx context.Context, userAction *models.UserActi
 func (u *actionsDAO) UnlikeApod(ctx context.Context, userAction *models.UserAction) error {
 	_, err := likesCollection.DeleteOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
 	return err
+}
+
+func saveApodExists(ctx context.Context, userAction *models.UserAction) bool {
+	singleResult := savesCollection.FindOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
+	if singleResult.Err() != nil {
+		return false
+	}
+
+	return true
+}
+
+func likeApodExists(ctx context.Context, userAction *models.UserAction) bool {
+	singleResult := likesCollection.FindOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
+	if singleResult.Err() != nil {
+		return false
+	}
+
+	return true
 }
