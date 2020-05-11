@@ -12,37 +12,23 @@ import (
 
 	"github.com/kkwon1/APODViewerService/api/apod"
 	"github.com/kkwon1/APODViewerService/api/users"
+	"github.com/kkwon1/APODViewerService/utils"
 
 	"github.com/gorilla/mux"
 )
-
-// CORS Middleware
-func CORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		// Set headers
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers:", "Origin, X-Requested-With, Content-Type, Accept")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, PUT, OPTIONS")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		// Next
-		next.ServeHTTP(w, r)
-		return
-	})
-}
 
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HelloServer)
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("/users/save/", users.SaveContent).Methods(http.MethodPost, http.MethodOptions)
+	tokenVerifier := utils.NewTokenVerifier()
+	userAction := users.NewUserAction(tokenVerifier)
+	userDataRetriever := users.NewUserDataRetriever(tokenVerifier)
+
+	api.HandleFunc("/users/action/", userAction.ApplyAction).Methods(http.MethodPost, http.MethodOptions)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet, http.MethodOptions)
+	api.HandleFunc("/users/data/", userDataRetriever.RetrieveUserData).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Use(CORS)
 
@@ -81,4 +67,23 @@ func main() {
 // Temporary endpoint for debugging purposes
 func HelloServer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
+}
+
+// CORS Middleware
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Set headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers:", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, PUT, OPTIONS")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Next
+		next.ServeHTTP(w, r)
+	})
 }

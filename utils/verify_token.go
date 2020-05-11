@@ -1,4 +1,4 @@
-package users
+package utils
 
 import (
 	"fmt"
@@ -12,7 +12,18 @@ import (
 	"google.golang.org/api/option"
 )
 
-func VerifyToken(ctx context.Context, idToken string) (bool, error) {
+type TokenVerifier interface {
+	VerifyToken(ctx context.Context, idToken string) (bool, error)
+}
+
+type tokenVerifier struct {
+}
+
+func NewTokenVerifier() TokenVerifier {
+	return &tokenVerifier{}
+}
+
+func (tv *tokenVerifier) VerifyToken(ctx context.Context, idToken string) (bool, error) {
 	credentials_file := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 	opt := option.WithCredentialsFile(credentials_file)

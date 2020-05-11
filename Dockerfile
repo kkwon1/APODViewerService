@@ -9,7 +9,7 @@ ENV MONGODB_NAME mongo
 
 RUN go get -d -v ./...
 RUN go install -v ./...
-RUN go build cmd/apodviewer/main.go
+RUN go build main.go
 
 # This container exposes port 8081 to the outside world
 EXPOSE 8081
