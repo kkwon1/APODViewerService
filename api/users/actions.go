@@ -53,6 +53,14 @@ func UserAction(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(insertError)
 			return
 		}
+	case "unsave":
+		deleteError := actionsDAO.UnsaveApod(ctx, userAction)
+		if deleteError != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Service Error"))
+			log.Fatal(deleteError)
+			return
+		}
 	case "like":
 		insertError := actionsDAO.LikeApod(ctx, userAction)
 		if insertError != nil {
@@ -61,11 +69,19 @@ func UserAction(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(insertError)
 			return
 		}
+	case "unlike":
+		deleteError := actionsDAO.UnlikeApod(ctx, userAction)
+		if deleteError != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Service Error"))
+			log.Fatal(deleteError)
+			return
+		}
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid action in request body"))
 		return
 	}
 
-	log.Printf("Username: %s, Successfully completed user action: %s", userAction.UserID, userAction.Action)
+	log.Printf("UserID: %s, Successfully completed user action: %s", userAction.UserID, userAction.Action)
 }
