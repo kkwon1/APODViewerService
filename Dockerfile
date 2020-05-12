@@ -5,7 +5,7 @@ WORKDIR /DevWork/APODViewerService
 COPY . .
 
 ENV GOOGLE_APPLICATION_CREDENTIALS /DevWork/APODViewerService/secrets/firebase_secrets.json
-ENV MONGODB_NAME mongo
+ENV MONGODB_URI mongodb://mongo:27017
 
 RUN go get -d -v ./...
 RUN go install -v ./...

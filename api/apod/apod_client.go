@@ -9,18 +9,9 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 const layoutISO = "2006-01-02"
-
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
 
 // GetBatchImages will retrieve multiple images from NASA APOD API
 func GetBatchImages(w http.ResponseWriter, r *http.Request) {

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/kkwon1/APODViewerService/api/apod"
@@ -37,6 +38,7 @@ func dependencyInit() {
 }
 
 func main() {
+	godotenv.Load()
 	port := os.Getenv("PORT")
 
 	r := mux.NewRouter()
