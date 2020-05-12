@@ -1,1 +1,1 @@
-web: /bin/APODViewerService
+web: ./bin/APODViewerService
