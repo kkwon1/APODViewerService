@@ -87,7 +87,7 @@ func main() {
 // TODO: Remove
 // Temporary endpoint for debugging purposes
 func HelloServer(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
+	fmt.Fprintf(w, "Hello World! Heroku Test")
 }
 
 // CORS Middleware
