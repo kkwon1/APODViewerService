@@ -1,6 +1,6 @@
 module github.com/kkwon1/APODViewerService
 
-go 1.14.2
+go 1.14
 
 require (
 	cloud.google.com/go/firestore v1.2.0 // indirect
