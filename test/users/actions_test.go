@@ -9,25 +9,39 @@ import (
 	"testing"
 
 	"github.com/kkwon1/APODViewerService/api/users"
+	"github.com/kkwon1/APODViewerService/models"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Mock the token verifier by implementing the interface
+/*
+	Mock dependencies
+*/
 type mockTokenVerifier struct{}
 
 func (m *mockTokenVerifier) VerifyToken(ctx context.Context, idToken string) (bool, error) {
 	return true, nil
 }
 
-var userAction users.UserAction = users.NewUserAction(&mockTokenVerifier{})
+type mockUserActionDAO struct {
+	savesCollection *mongo.Collection
+	likesCollection *mongo.Collection
+}
 
-/*
-	Currently tests are not atomic. Depends on order of tests being run.
-	If it crashes while running a test, records will persist in the DB and not be deleted.
+//TODO: Make a before/after to mock the functions so we can test error paths as well
+func (m *mockUserActionDAO) SaveApod(ctx context.Context, userAction *models.UserAction) error {
+	return nil
+}
+func (m *mockUserActionDAO) UnsaveApod(ctx context.Context, userAction *models.UserAction) error {
+	return nil
+}
+func (m *mockUserActionDAO) LikeApod(ctx context.Context, userAction *models.UserAction) error {
+	return nil
+}
+func (m *mockUserActionDAO) UnlikeApod(ctx context.Context, userAction *models.UserAction) error {
+	return nil
+}
 
-	TODO: Maybe add a before/after function to do some setup/teardown? Check if record exists
-	delete if it does. Delete after everything. Probably need to instantiate or bring in mongodb client
-	to manually create/delete users
-*/
+var userAction users.UserAction = users.NewUserAction(&mockTokenVerifier{}, &mockUserActionDAO{})
 
 const testUserID = "DB_TEST_ID"
 const testApodURL = "https://apod.nasa.gov/apod/image/2005/c2020_f8_2020_05_02dp_1024.jpg"

@@ -22,7 +22,7 @@ type userDataDAO struct {
 }
 
 // NewUserDataDAO returns the userDataDAO object that implements the interface
-func NewUserDataDAO() UserDataDAO {
+func NewUserDataDAO(savesCollection *mongo.Collection, likesCollection *mongo.Collection) UserDataDAO {
 	return &userDataDAO{
 		savesCollection: savesCollection,
 		likesCollection: likesCollection,
@@ -30,8 +30,8 @@ func NewUserDataDAO() UserDataDAO {
 }
 
 // SaveApod adds a new record of a save action in the database
-func (u *userDataDAO) GetUserSaves(ctx context.Context, userID string) ([]*models.ApodObject, error) {
-	cursor, err := savesCollection.Find(ctx, bson.M{"userid": userID})
+func (dao *userDataDAO) GetUserSaves(ctx context.Context, userID string) ([]*models.ApodObject, error) {
+	cursor, err := dao.savesCollection.Find(ctx, bson.M{"userid": userID})
 	var results []*models.ApodObject
 
 	// iterate through all documents
@@ -48,8 +48,8 @@ func (u *userDataDAO) GetUserSaves(ctx context.Context, userID string) ([]*model
 }
 
 // LikeApod adds a new record of a like action in the database
-func (u *userDataDAO) GetUserLikes(ctx context.Context, userID string) ([]*models.ApodObject, error) {
-	cursor, err := likesCollection.Find(ctx, bson.M{"userid": userID})
+func (dao *userDataDAO) GetUserLikes(ctx context.Context, userID string) ([]*models.ApodObject, error) {
+	cursor, err := dao.likesCollection.Find(ctx, bson.M{"userid": userID})
 	var results []*models.ApodObject
 
 	// iterate through all documents

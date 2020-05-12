@@ -14,19 +14,19 @@ import (
 	"github.com/kkwon1/APODViewerService/utils"
 )
 
-var actionsDAO = db.NewUserActionDAO()
-
 type UserAction interface {
 	ApplyAction(w http.ResponseWriter, r *http.Request)
 }
 
 type userAction struct {
 	tokenVerifier utils.TokenVerifier
+	actionsDAO    db.ActionsDAO
 }
 
-func NewUserAction(tokenVerifier utils.TokenVerifier) UserAction {
+func NewUserAction(tokenVerifier utils.TokenVerifier, actionsDAO db.ActionsDAO) UserAction {
 	return &userAction{
 		tokenVerifier: tokenVerifier,
+		actionsDAO:    actionsDAO,
 	}
 }
 
@@ -60,16 +60,16 @@ func (ua *userAction) ApplyAction(w http.ResponseWriter, r *http.Request) {
 	var err error
 	switch userAction.Action {
 	case "save":
-		err = actionsDAO.SaveApod(ctx, userAction)
+		err = ua.actionsDAO.SaveApod(ctx, userAction)
 		w.Write([]byte("Successfully saved APOD"))
 	case "unsave":
-		err = actionsDAO.UnsaveApod(ctx, userAction)
+		err = ua.actionsDAO.UnsaveApod(ctx, userAction)
 		w.Write([]byte("Successfully unsaved APOD"))
 	case "like":
-		err = actionsDAO.LikeApod(ctx, userAction)
+		err = ua.actionsDAO.LikeApod(ctx, userAction)
 		w.Write([]byte("Successfully liked APOD"))
 	case "unlike":
-		err = actionsDAO.UnlikeApod(ctx, userAction)
+		err = ua.actionsDAO.UnlikeApod(ctx, userAction)
 		w.Write([]byte("Successfully unliked APOD"))
 	default:
 		w.WriteHeader(http.StatusBadRequest)

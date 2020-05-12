@@ -13,19 +13,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var userDataDAO = db.NewUserDataDAO()
-
 type UserDataRetriever interface {
 	RetrieveUserData(w http.ResponseWriter, r *http.Request)
 }
 
 type userDataRetriever struct {
 	tokenVerifier utils.TokenVerifier
+	userDataDAO   db.UserDataDAO
 }
 
-func NewUserDataRetriever(tokenVerifier utils.TokenVerifier) UserDataRetriever {
+func NewUserDataRetriever(tokenVerifier utils.TokenVerifier, userDataDAO db.UserDataDAO) UserDataRetriever {
 	return &userDataRetriever{
 		tokenVerifier: tokenVerifier,
+		userDataDAO:   userDataDAO,
 	}
 }
 
@@ -55,7 +55,7 @@ func (udr *userDataRetriever) RetrieveUserData(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	userSaves, getSaveError := userDataDAO.GetUserSaves(ctx, userDataRetrievalModel.UserID)
+	userSaves, getSaveError := udr.userDataDAO.GetUserSaves(ctx, userDataRetrievalModel.UserID)
 	if getSaveError != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Verification Failed"))
@@ -63,7 +63,7 @@ func (udr *userDataRetriever) RetrieveUserData(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	userLikes, _ := userDataDAO.GetUserLikes(ctx, userDataRetrievalModel.UserID)
+	userLikes, _ := udr.userDataDAO.GetUserLikes(ctx, userDataRetrievalModel.UserID)
 
 	userData := models.UserData{
 		UserSaves: userSaves,

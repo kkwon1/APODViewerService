@@ -22,7 +22,7 @@ type actionsDAO struct {
 }
 
 // NewUserActionDAO returns the actionsDAO object that implements the interface
-func NewUserActionDAO() ActionsDAO {
+func NewUserActionDAO(savesCollection *mongo.Collection, likesCollection *mongo.Collection) ActionsDAO {
 	return &actionsDAO{
 		savesCollection: savesCollection,
 		likesCollection: likesCollection,
@@ -30,18 +30,18 @@ func NewUserActionDAO() ActionsDAO {
 }
 
 // SaveApod adds a new record of a save action in the database
-func (u *actionsDAO) SaveApod(ctx context.Context, userAction *models.UserAction) error {
-	if !saveApodExists(ctx, userAction) {
-		_, err := savesCollection.InsertOne(ctx, userAction)
+func (dao *actionsDAO) SaveApod(ctx context.Context, userAction *models.UserAction) error {
+	if !saveApodExists(ctx, userAction, dao.savesCollection) {
+		_, err := dao.savesCollection.InsertOne(ctx, userAction)
 		return err
 	}
 	return nil
 }
 
 // LikeApod adds a new record of a like action in the database
-func (u *actionsDAO) LikeApod(ctx context.Context, userAction *models.UserAction) error {
-	if !likeApodExists(ctx, userAction) {
-		_, err := likesCollection.InsertOne(ctx, userAction)
+func (dao *actionsDAO) LikeApod(ctx context.Context, userAction *models.UserAction) error {
+	if !likeApodExists(ctx, userAction, dao.likesCollection) {
+		_, err := dao.likesCollection.InsertOne(ctx, userAction)
 		return err
 	}
 	return nil
@@ -49,18 +49,18 @@ func (u *actionsDAO) LikeApod(ctx context.Context, userAction *models.UserAction
 
 //TODO: In the future, support multiple saved image deletion
 // UnsaveApod removes the save action record with given date
-func (u *actionsDAO) UnsaveApod(ctx context.Context, userAction *models.UserAction) error {
-	_, err := savesCollection.DeleteOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
+func (dao *actionsDAO) UnsaveApod(ctx context.Context, userAction *models.UserAction) error {
+	_, err := dao.savesCollection.DeleteOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
 	return err
 }
 
 // UnlikeApod removes the like action record with given date
-func (u *actionsDAO) UnlikeApod(ctx context.Context, userAction *models.UserAction) error {
-	_, err := likesCollection.DeleteOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
+func (dao *actionsDAO) UnlikeApod(ctx context.Context, userAction *models.UserAction) error {
+	_, err := dao.likesCollection.DeleteOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
 	return err
 }
 
-func saveApodExists(ctx context.Context, userAction *models.UserAction) bool {
+func saveApodExists(ctx context.Context, userAction *models.UserAction, savesCollection *mongo.Collection) bool {
 	singleResult := savesCollection.FindOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
 	if singleResult.Err() != nil {
 		return false
@@ -69,7 +69,7 @@ func saveApodExists(ctx context.Context, userAction *models.UserAction) bool {
 	return true
 }
 
-func likeApodExists(ctx context.Context, userAction *models.UserAction) bool {
+func likeApodExists(ctx context.Context, userAction *models.UserAction, likesCollection *mongo.Collection) bool {
 	singleResult := likesCollection.FindOne(ctx, bson.M{"apoddate": userAction.ApodDate, "userid": userAction.UserID})
 	if singleResult.Err() != nil {
 		return false
