@@ -18,6 +18,12 @@ import (
 )
 
 func main() {
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8081"
+	}
+
 	r := mux.NewRouter()
 	r.HandleFunc("/", HelloServer)
 	api := r.PathPrefix("/api/v1").Subrouter()
@@ -33,7 +39,7 @@ func main() {
 	r.Use(CORS)
 
 	srv := &http.Server{
-		Addr:    ":8081",
+		Addr:    ":" + port,
 		Handler: r,
 	}
 

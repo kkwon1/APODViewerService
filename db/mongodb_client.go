@@ -20,7 +20,7 @@ const dbName = "apodDB"
 
 func init() {
 	// Set client options
-	mongo_uri := fmt.Sprintf("mongodb://%s:27017", os.Getenv("MONGODB_NAME"))
+	mongo_uri := fmt.Sprintf(os.Getenv("MONGODB_URI"))
 	clientOptions := options.Client().ApplyURI(mongo_uri)
 
 	// Connect to MongoDB
