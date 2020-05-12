@@ -2,45 +2,41 @@ package db
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var databaseAPOD *mongo.Database
-
-// Collection objects that are used within the package
-var savesCollection *mongo.Collection
-var likesCollection *mongo.Collection
-
 const dbName = "apodDB"
 
-func init() {
-	// Set client options
-	mongo_uri := fmt.Sprintf(os.Getenv("MONGODB_URI"))
+type MongoDbClient interface {
+	GetApodDB(ctx context.Context, mongo_uri string) *mongo.Database
+}
+
+type mongoDbClient struct {
+}
+
+func NewMongoClient() MongoDbClient {
+	return &mongoDbClient{}
+}
+
+func (m *mongoDbClient) GetApodDB(ctx context.Context, mongo_uri string) *mongo.Database {
 	clientOptions := options.Client().ApplyURI(mongo_uri)
-
 	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Check the connection
-	err = client.Ping(context.TODO(), nil)
-
+	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Successfully connected to MongoDB!")
+	log.Printf("Successfully connected to MongoDB at %s", mongo_uri)
+	databaseAPOD := client.Database(dbName)
 
-	databaseAPOD = client.Database(dbName)
-
-	savesCollection = databaseAPOD.Collection("saves")
-	likesCollection = databaseAPOD.Collection("likes")
+	return databaseAPOD
 }

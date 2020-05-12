@@ -3,34 +3,47 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kkwon1/APODViewerService/api/apod"
 	"github.com/kkwon1/APODViewerService/api/users"
+	"github.com/kkwon1/APODViewerService/db"
 	"github.com/kkwon1/APODViewerService/utils"
 
 	"github.com/gorilla/mux"
 )
 
+var userAction users.UserAction
+var userDataRetriever users.UserDataRetriever
+
+func dependencyInit() {
+	tokenVerifier := utils.NewTokenVerifier()
+	apodDb := db.NewMongoClient().GetApodDB(context.Background(), os.Getenv("MONGODB_URI"))
+
+	// Initialize the collections that will be used in DAOs
+	savesCollection := apodDb.Collection("saves")
+	likesCollection := apodDb.Collection("likes")
+	userActionDAO := db.NewUserActionDAO(savesCollection, likesCollection)
+	userDataDAO := db.NewUserDataDAO(savesCollection, likesCollection)
+
+	userAction = users.NewUserAction(tokenVerifier, userActionDAO)
+	userDataRetriever = users.NewUserDataRetriever(tokenVerifier, userDataDAO)
+}
+
 func main() {
 	port := os.Getenv("PORT")
-
-	if port == "" {
-		port = "8081"
-	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", HelloServer)
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	tokenVerifier := utils.NewTokenVerifier()
-	userAction := users.NewUserAction(tokenVerifier)
-	userDataRetriever := users.NewUserDataRetriever(tokenVerifier)
+	dependencyInit()
 
 	api.HandleFunc("/users/action/", userAction.ApplyAction).Methods(http.MethodPost, http.MethodOptions)
 	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet, http.MethodOptions)
