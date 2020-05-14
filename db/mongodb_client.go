@@ -2,14 +2,13 @@ package db
 
 import (
 	"context"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-const dbName = "apodDB"
 
 type MongoDbClient interface {
 	GetApodDB(ctx context.Context, mongo_uri string) *mongo.Database
@@ -35,7 +34,8 @@ func (m *mongoDbClient) GetApodDB(ctx context.Context, mongo_uri string) *mongo.
 		log.Fatal(err)
 	}
 
-	log.Printf("Successfully connected to MongoDB at %s", mongo_uri)
+	dbName := os.Getenv("DB_NAME")
+	log.Printf("Successfully connected to MongoDB at %s, using database %s", mongo_uri, dbName)
 	databaseAPOD := client.Database(dbName)
 
 	return databaseAPOD
