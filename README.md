@@ -48,10 +48,10 @@ NASA_API_KEY=<YOUR_API_KEY>
 
 ### Firebase
 
-User authentication is done via Google's Firebase. You will need to set up your own [firebase project](https://firebase.google.com/) and generate a private Admin SDK key (used to verify user token from front end). Save the `.json` file as a string in an environment variable
+User authentication is done via Google's Firebase. You will need to set up your own [firebase project](https://firebase.google.com/) and generate a private Admin SDK key (used to verify user token from front end) stored as a `.json` file, which you can set the path as an environment variable.
 
 ```
-FIREBASE_CONFIG=<SECRET_JSON>
+GOOGLE_APPLICATION_CREDENTIALS=<PATH_TO_SECRETS>
 ```
 
 ## Usage

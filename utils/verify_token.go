@@ -2,11 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"os"
 
 	"golang.org/x/net/context"
 
 	firebase "firebase.google.com/go"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 )
 
 type TokenVerifier interface {
@@ -21,7 +23,10 @@ func NewTokenVerifier() TokenVerifier {
 }
 
 func (tv *tokenVerifier) VerifyToken(ctx context.Context, idToken string) (bool, error) {
-	app, err := firebase.NewApp(context.Background(), nil)
+	credentials_file := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	opt := option.WithCredentialsFile(credentials_file)
+
+	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		return false, fmt.Errorf("error initializing app: %v", err)
 	}
