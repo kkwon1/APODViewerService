@@ -61,16 +61,16 @@ func (ua *userAction) ApplyAction(w http.ResponseWriter, r *http.Request) {
 	switch userAction.Action {
 	case "save":
 		err = ua.actionsDAO.SaveApod(ctx, userAction)
-		log.Debugln("Successfully saved APOD")
+		log.Println("Successfully saved APOD")
 	case "unsave":
 		err = ua.actionsDAO.UnsaveApod(ctx, userAction)
-		log.Debugln("Successfully unsaved APOD")
+		log.Println("Successfully unsaved APOD")
 	case "like":
 		err = ua.actionsDAO.LikeApod(ctx, userAction)
-		log.Debugln("Successfully liked APOD")
+		log.Println("Successfully liked APOD")
 	case "unlike":
 		err = ua.actionsDAO.UnlikeApod(ctx, userAction)
-		log.Debugln("Successfully unliked APOD")
+		log.Println("Successfully unliked APOD")
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid action in request body"))
