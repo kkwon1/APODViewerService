@@ -3,9 +3,11 @@ package apod
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/kkwon1/APODViewerService/api/users"
@@ -53,7 +55,7 @@ const testActionDate = "2020-05-11T18:19:58.747Z"
 
 const testToken = "Bearer mock-token"
 
-func getTestJson(action string) string {
+func getTestJsonString(action string) string {
 	testJSON := fmt.Sprintf(`{
 		"UserID": "%s",
 		"Action": "%s",
@@ -68,7 +70,23 @@ func getTestJson(action string) string {
 	return testJSON
 }
 
-func ApodActionTestHelper(t *testing.T, payload []byte, expected string, expectedStatus int) {
+func getTestOutput() *models.ApodObject {
+	testJSON := fmt.Sprintf(`{
+		"UserID": "%s",
+		"ApodURL": "%s",
+		"ApodName": "%s",
+		"ApodDate": "%s",
+		"MediaType": "%s",
+		"Description": "%s",
+		"ActionDate": "%s"
+	}`, testUserID, testApodURL, testApodName, testApodDate, testMediaType, testDescription, testActionDate)
+
+	testOutput := models.ApodObject{}
+	json.Unmarshal([]byte(testJSON), &testOutput)
+	return &testOutput
+}
+
+func ApodActionTestHelper(t *testing.T, payload []byte, expected *models.ApodObject, expectedStatus int) {
 	req, err := http.NewRequest("POST", "/users/action", bytes.NewBuffer(payload))
 	if err != nil {
 		t.Fatal(err)
@@ -84,38 +102,41 @@ func ApodActionTestHelper(t *testing.T, payload []byte, expected string, expecte
 			status, expectedStatus)
 	}
 
-	if rr.Body.String() != expected {
+	var apodObject *models.ApodObject
+	_ = json.NewDecoder(rr.Body).Decode(&apodObject)
+
+	if !reflect.DeepEqual(apodObject, expected) {
 		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
+			apodObject, expected)
 	}
 }
 
 func TestSaveApodHappyPath(t *testing.T) {
-	var payload = []byte(getTestJson("save"))
+	var payload = []byte(getTestJsonString("save"))
 
-	ApodActionTestHelper(t, payload, "Successfully saved APOD", http.StatusOK)
+	ApodActionTestHelper(t, payload, getTestOutput(), http.StatusOK)
 }
 
 func TestUnsaveApodHappyPath(t *testing.T) {
-	var payload = []byte(getTestJson("unsave"))
+	var payload = []byte(getTestJsonString("unsave"))
 
-	ApodActionTestHelper(t, payload, "Successfully unsaved APOD", http.StatusOK)
+	ApodActionTestHelper(t, payload, getTestOutput(), http.StatusOK)
 }
 
 func TestLikeApodHappyPath(t *testing.T) {
-	var payload = []byte(getTestJson("like"))
+	var payload = []byte(getTestJsonString("like"))
 
-	ApodActionTestHelper(t, payload, "Successfully liked APOD", http.StatusOK)
+	ApodActionTestHelper(t, payload, getTestOutput(), http.StatusOK)
 }
 
 func TestUnlikeApodHappyPath(t *testing.T) {
-	var payload = []byte(getTestJson("unlike"))
+	var payload = []byte(getTestJsonString("unlike"))
 
-	ApodActionTestHelper(t, payload, "Successfully unliked APOD", http.StatusOK)
+	ApodActionTestHelper(t, payload, getTestOutput(), http.StatusOK)
 }
 
 func TestInvalidAction(t *testing.T) {
-	var payload = []byte(getTestJson("invalidAction"))
+	var payload = []byte(getTestJsonString("invalidAction"))
 
-	ApodActionTestHelper(t, payload, "Invalid action in request body", http.StatusBadRequest)
+	ApodActionTestHelper(t, payload, nil, http.StatusBadRequest)
 }
