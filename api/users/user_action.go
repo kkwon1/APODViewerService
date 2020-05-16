@@ -61,16 +61,16 @@ func (ua *userAction) ApplyAction(w http.ResponseWriter, r *http.Request) {
 	switch userAction.Action {
 	case "save":
 		err = ua.actionsDAO.SaveApod(ctx, userAction)
-		w.Write([]byte("Successfully saved APOD"))
+		log.Println("Successfully saved APOD")
 	case "unsave":
 		err = ua.actionsDAO.UnsaveApod(ctx, userAction)
-		w.Write([]byte("Successfully unsaved APOD"))
+		log.Println("Successfully unsaved APOD")
 	case "like":
 		err = ua.actionsDAO.LikeApod(ctx, userAction)
-		w.Write([]byte("Successfully liked APOD"))
+		log.Println("Successfully liked APOD")
 	case "unlike":
 		err = ua.actionsDAO.UnlikeApod(ctx, userAction)
-		w.Write([]byte("Successfully unliked APOD"))
+		log.Println("Successfully unliked APOD")
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid action in request body"))
@@ -80,9 +80,27 @@ func (ua *userAction) ApplyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Service Error"))
-		log.Fatal(err)
+		log.Errorln(err)
 		return
+	} else if err == nil {
+		apodData := convertUserActionToApodObject(userAction)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(apodData)
 	}
 
 	log.Printf("UserID: %s, Successfully completed user action: %s", userAction.UserID, userAction.Action)
+}
+
+func convertUserActionToApodObject(userAction *models.UserAction) *models.ApodObject {
+	apodObject := &models.ApodObject{
+		UserID:      userAction.UserID,
+		ApodURL:     userAction.ApodURL,
+		ApodName:    userAction.ApodName,
+		ApodDate:    userAction.ApodDate,
+		MediaType:   userAction.MediaType,
+		Description: userAction.Description,
+		ActionDate:  userAction.ActionDate,
+	}
+
+	return apodObject
 }
