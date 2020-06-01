@@ -91,6 +91,7 @@ func convertToApodObject(NasaApodObject models.NASAApodObject) models.ApodObject
 		ApodDate:    NasaApodObject.Date,
 		MediaType:   NasaApodObject.Media_type,
 		Description: NasaApodObject.Explanation,
+		Copyright:   NasaApodObject.Copyright,
 	}
 
 	return apodObject

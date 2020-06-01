@@ -10,4 +10,5 @@ type ApodObject struct {
 	MediaType   string
 	Description string
 	ActionDate  string
+	Copyright   string
 }
