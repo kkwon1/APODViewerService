@@ -10,13 +10,24 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kkwon1/APODViewerService/models"
 	log "github.com/sirupsen/logrus"
 )
 
 const layoutISO = "2006-01-02"
 
+type ApodClient interface {
+	GetBatchImages(w http.ResponseWriter, r *http.Request)
+}
+
+type apodClient struct{}
+
+func NewApodClient() ApodClient {
+	return &apodClient{}
+}
+
 // GetBatchImages will retrieve multiple images from NASA APOD API
-func GetBatchImages(w http.ResponseWriter, r *http.Request) {
+func (ac *apodClient) GetBatchImages(w http.ResponseWriter, r *http.Request) {
 	count, convErr := strconv.Atoi(r.URL.Query().Get("count"))
 
 	if convErr != nil {
@@ -45,10 +56,17 @@ func GetBatchImages(w http.ResponseWriter, r *http.Request) {
 		log.Errorln(err)
 	}
 
+	var responseObjects []models.NASAApodObject
+	err = json.Unmarshal(body, &responseObjects)
+	if err != nil {
+		log.Errorln(err)
+	}
+	apodObjects := mapFcn(responseObjects, convertToApodObject)
+
 	log.Printf("Successfully retrieved %d number of images", count)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(body)
+	json.NewEncoder(w).Encode(apodObjects)
 }
 
 func getStartEndDates(count int, page int) (string, string) {
@@ -63,4 +81,25 @@ func getStartEndDates(count int, page int) (string, string) {
 	startDate := endDateTime.AddDate(0, 0, (count-1)*-1).Format(layoutISO)
 
 	return startDate, endDate
+}
+
+func convertToApodObject(NasaApodObject models.NASAApodObject) models.ApodObject {
+	apodObject := models.ApodObject{
+		ApodURL:     NasaApodObject.Url,
+		ApodHDURL:   NasaApodObject.Hdurl,
+		ApodName:    NasaApodObject.Title,
+		ApodDate:    NasaApodObject.Date,
+		MediaType:   NasaApodObject.Media_type,
+		Description: NasaApodObject.Explanation,
+	}
+
+	return apodObject
+}
+
+func mapFcn(vs []models.NASAApodObject, f func(models.NASAApodObject) models.ApodObject) []models.ApodObject {
+	vsm := make([]models.ApodObject, len(vs))
+	for i, v := range vs {
+		vsm[i] = f(v)
+	}
+	return vsm
 }

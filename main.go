@@ -22,8 +22,10 @@ import (
 
 var userAction users.UserAction
 var userDataRetriever users.UserDataRetriever
+var apodClient apod.ApodClient
 
 func dependencyInit() {
+	apodClient = apod.NewApodClient()
 	tokenVerifier := utils.NewTokenVerifier()
 	apodDb := db.NewMongoClient().GetApodDB(context.Background(), os.Getenv("MONGODB_URI"))
 
@@ -48,7 +50,7 @@ func main() {
 	dependencyInit()
 
 	api.HandleFunc("/users/action/", userAction.ApplyAction).Methods(http.MethodPost, http.MethodOptions)
-	api.HandleFunc("/apod/batch/", apod.GetBatchImages).Methods(http.MethodGet, http.MethodOptions)
+	api.HandleFunc("/apod/batch/", apodClient.GetBatchImages).Methods(http.MethodGet, http.MethodOptions)
 	api.HandleFunc("/users/data/", userDataRetriever.RetrieveUserData).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Use(CORS)
