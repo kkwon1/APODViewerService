@@ -33,6 +33,8 @@ func (udr *userDataRetriever) RetrieveUserData(w http.ResponseWriter, r *http.Re
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	log.Print("Retrieving User Data")
+
 	var userDataRetrievalModel *models.UserAction
 
 	decodeError := json.NewDecoder(r.Body).Decode(&userDataRetrievalModel)
