@@ -25,8 +25,10 @@ var userDataRetriever users.UserDataRetriever
 var apodClient apod.ApodClient
 
 func dependencyInit() {
+	credentialsFilePath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
 	apodClient = apod.NewApodClient()
-	tokenVerifier := utils.NewTokenVerifier()
+	tokenVerifier := utils.NewTokenVerifier(credentialsFilePath)
 	apodDb := db.NewMongoClient().GetApodDB(context.Background(), os.Getenv("MONGODB_URI"))
 
 	// Initialize the collections that will be used in DAOs

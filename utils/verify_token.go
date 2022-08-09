@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"os"
 
 	"golang.org/x/net/context"
 
@@ -16,15 +15,17 @@ type TokenVerifier interface {
 }
 
 type tokenVerifier struct {
+	credentialsFilePath string
 }
 
-func NewTokenVerifier() TokenVerifier {
-	return &tokenVerifier{}
+func NewTokenVerifier(credentialsFilePath string) TokenVerifier {
+	return &tokenVerifier{
+		credentialsFilePath: credentialsFilePath,
+	}
 }
 
 func (tv *tokenVerifier) VerifyToken(ctx context.Context, idToken string) (bool, error) {
-	credentials_file := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	opt := option.WithCredentialsFile(credentials_file)
+	opt := option.WithCredentialsFile(tv.credentialsFilePath)
 
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {

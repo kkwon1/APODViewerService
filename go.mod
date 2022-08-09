@@ -11,6 +11,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-stack/stack v1.8.1
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/mock v1.6.0
 	github.com/golang/snappy v0.0.4
 	github.com/golangci/golangci-lint v1.26.0 // indirect
 	github.com/google/wire v0.4.0 // indirect
